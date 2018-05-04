@@ -1,0 +1,5 @@
+
+- Enhance the configuration, make it possible to
+  add, remove, change the order of protocol modules
+- Support PTYs
+- Complete unit tests for libslip

@@ -1,0 +1,5 @@
+set pri pre
+file libslip-test
+set args t.txt
+b main
+r
