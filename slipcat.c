@@ -26,8 +26,9 @@
 
 #include <glib.h>
 
-#include <slipcat.h>
-#include <libslip.h>
+#include "slipcat.h"
+#include "libslip.h"
+#include "queue.h"
 
 #define BUF_MAXSIZE 8192
 #define S_IN_SIZE sizeof(struct sockaddr_in)
@@ -52,7 +53,7 @@ struct sl {
 	sl_cb_t *cb;
 	void *user_data;
 	char *name;
-	GList e;
+	S_QUEUE_ENTRY(sl) e;
 };
 
 static int opt_debug = 1;
@@ -72,7 +73,7 @@ static int opt_udp_dst_port;
 static char *opt_trace_addr;
 static int opt_trace_port;
 
-static GQueue sl_queue = G_QUEUE_INIT;
+static S_QUEUE(sl) sl_queue;
 
 sl_data_t *data_new(void)
 {
@@ -129,28 +130,23 @@ sl_t *sl_new(const char *name, sl_cb_t *cb)
 
 	s->cb = cb;
 
-	s->e.data = s;
-
-	g_queue_push_tail_link(&sl_queue, &s->e);
+	S_QUEUE_INSERT_TAIL(&sl_queue, s, e);
 
 	return s;
 }
 
-int sl_send(GList *n, sl_op_t op, sl_data_t **d)
+int sl_send(sl_t *s, sl_op_t op, sl_data_t **d)
 {
 	int ret = FALSE;
-	sl_t *s;
 
-	while (n) {
-
-		s = n->data;
+	while (s) {
 
 		ret = s->cb(s, op, d);
 
 		if (ret != TRUE)
 			break;
 
-		n = (SL_OP_UP == op) ? n->next : n->prev;
+		s = (SL_OP_UP == op) ? S_QUEUE_NEXT(s, e) : S_QUEUE_PREV(s, e);
 	}
 
 	return ret;
@@ -376,9 +372,8 @@ static void sl_config(void)
 
 static void sl_data_flow(sl_op_t op)
 {
-	GList *n = (op == SL_OP_UP) ? g_queue_peek_head_link(&sl_queue) :
-					g_queue_peek_tail_link(&sl_queue);
-	sl_t *s = n->data;
+	sl_t *s = (op == SL_OP_UP) ? S_QUEUE_HEAD(&sl_queue) :
+						S_QUEUE_TAIL(&sl_queue);
 	sl_data_t *data;
 
 	if (!fd_is_readable(s->fd))
@@ -386,7 +381,7 @@ static void sl_data_flow(sl_op_t op)
 
 	data = data_new();
 
-	sl_send(n, op, &data);
+	sl_send(s, op, &data);
 
 	data_free(&data);
 }
@@ -501,6 +496,8 @@ static void options_parse(int *argc, char **argv[])
 
 int main(int argc, char *argv[])
 {
+	S_QUEUE_INIT(&sl_queue);
+
 	defaults_config();
 
 	options_parse(&argc, &argv);
