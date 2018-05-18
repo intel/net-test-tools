@@ -1,0 +1,5 @@
+{ 'input': [ 'S_QUEUE_INSERT_TAIL', '3' ] }
+{ 'input': [ 'S_QUEUE_INSERT_HEAD', '1' ] }
+{ 'input': [ 'S_QUEUE_INSERT_AFTER', '1', '2' ] }
+{ 'input': [ 'S_QUEUE_REMOVE', '2' ] }
+{ 'expected_output': [ '1', '3' ] }

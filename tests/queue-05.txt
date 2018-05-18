@@ -1,0 +1,3 @@
+{ 'input': [ 'S_QUEUE_INSERT_TAIL', '1' ] }
+{ 'input': [ 'S_QUEUE_INSERT_TAIL', '2' ] }
+{ 'expected_output': [ '1', '2' ] }
