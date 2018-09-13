@@ -447,7 +447,7 @@ static void sl_data_flow(sl_op_t op)
 						S_QUEUE_TAIL(&sl_queue);
 	sl_data_t *data;
 
-	if (!fd_is_readable(s->fd))
+	if (!fd_is_readable_old(s->fd))
 		return;
 
 	data = data_new();
