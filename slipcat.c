@@ -101,7 +101,7 @@ void data_free(sl_data_t **d)
 	*d = NULL;
 }
 
-int fd_is_readable(int fd)
+int fd_is_readable_old(int fd)
 {
 	uint8_t byte;
 	ssize_t r = recv(fd, &byte, 1, MSG_PEEK | MSG_DONTWAIT);
@@ -110,6 +110,30 @@ int fd_is_readable(int fd)
 
 	return (r > 0);
 }
+
+int fd_is_readable(int fd)
+{
+	fd_set fd_read;
+	struct timeval tv;
+	int nfds_ready;
+
+	FD_ZERO(&fd_read);
+	FD_SET(fd, &fd_read);
+
+	tv.tv_sec = 0;
+	tv.tv_usec = 1000;
+
+	nfds_ready = select(fd + 1, &fd_read, NULL, NULL, &tv);
+
+	if (nfds_ready <= 0) {
+		if (nfds_ready < 0) {
+			E("select");
+		}
+	}
+
+	return (nfds_ready > 0);
+}
+
 
 void *s_in(const char *addr, uint16_t port)
 {
