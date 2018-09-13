@@ -21,6 +21,7 @@
 
 #include <fcntl.h>
 #include <getopt.h>
+#include <pty.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -59,6 +60,7 @@ struct sl {
 static int opt_debug = 1;
 static int opt_tcp;
 static int opt_af_unix;
+static int opt_pty;
 static int opt_slip;
 static int opt_udp;
 static int opt_trace;
@@ -66,6 +68,7 @@ static int opt_trace;
 static char *opt_tcp_src_addr;
 static int opt_tcp_src_port;
 static char *opt_af_unix_path;
+static char *opt_pty_path;
 static char *opt_udp_src_addr;
 static int opt_udp_src_port;
 static char *opt_udp_dst_addr;
@@ -220,6 +223,44 @@ int af_unix_init(void)
 		close(s);
 		return fd;
 	}
+}
+
+int pty_init(void)
+{
+	int fd = open(opt_pty_path, O_RDWR);
+
+	if (fd == -1)
+		E("open");
+
+	if (0) {
+		struct termios ts;
+
+		cfmakeraw(&ts);
+
+		tcsetattr(fd, TCSANOW, &ts);
+	}
+
+	return fd;
+}
+
+int pty(sl_t *s, sl_op_t op, sl_data_t **data)
+{
+	sl_data_t *d = *data;
+	switch (op) {
+	case SL_OP_UP:
+		if ((d->len = read(s->fd, d->data, 1)) < 0)
+			W("read");
+		if (d->len) {
+			D("len=%zd", d->len);
+		}
+
+		break;
+	case SL_OP_DOWN:
+		if ((write(s->fd, d->data, d->len)) < 0)
+			W("write");
+		break;
+	}
+	return TRUE;
 }
 
 int af_unix(sl_t *s, sl_op_t op, sl_data_t **data)
@@ -378,6 +419,12 @@ static void sl_config(void)
 		D("fd=%d", s->fd);
 	}
 
+	if (opt_pty) {
+		s = sl_new("pty", pty);
+		s->fd = pty_init();
+		D("fd=%d", s->fd);
+	}
+
 	if (opt_slip) {
 		s = sl_new("slip", slip);
 		s->user_data = libslip_init();
@@ -443,6 +490,12 @@ static void configuration_print(void)
 			opt_tcp_src_addr, opt_tcp_src_port);
 	}
 
+	P("pty: %s", opt_pty ? "Enabled" : "Disabled");
+
+	if (opt_pty) {
+		P("pty: path=%s", opt_pty_path);
+	}
+
 	P("slip: %s", opt_slip ? "Enabled" : "Disabled");
 	P("trace: %s", opt_trace ? "Enabled" : "Disabled");
 
@@ -475,6 +528,12 @@ static void options_parse(int *argc, char **argv[])
 		{ "af-unix-path", 0, 0, G_OPTION_ARG_STRING,
 		  &opt_af_unix_path,
 		  "AF_UNIX socket pathname", NULL },
+
+		{ "pty", 0, 0, G_OPTION_ARG_INT, &opt_pty,
+		  "Enable pseudoterminal", NULL },
+		{ "pty-path", 0, 0, G_OPTION_ARG_STRING,
+		  &opt_pty_path,
+		  "Pseudoterminal pathname", NULL },
 
 		{ "tcp", 0, 0, G_OPTION_ARG_INT, &opt_tcp,
 		  "Enable TCP socket", NULL },

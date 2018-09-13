@@ -16,6 +16,7 @@ PKG_CHECK_MODULES([deps], [glib-2.0],
 	AC_SUBST([deps_LIBS]),
 	AC_MSG_ERROR(glib-2.0 is required))
 
+AC_SEARCH_LIBS([openpty], [util], , [AC_MSG_ERROR(util is required)])
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
