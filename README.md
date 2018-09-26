@@ -10,8 +10,8 @@ Slipcat can understand Serial Line IP protocol (SLIP) on one side,
 and can act similarly to other Linux network utilities like netcat or socat.
 
 - Slipcat consists of a set of protocol modules that are chained serially.
-- Each module is a simple task, performing encapsulation/decapsulation,
-  etc of a specific protocol.
+- Each module is a simple task, performing encapsulation/decapsulation
+  of a specific protocol.
 
 The utility is very basic and still work in progress.
 
