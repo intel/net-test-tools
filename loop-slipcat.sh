@@ -21,5 +21,5 @@ quit() {
 }
 
 while [ $QUIT -ne 1 ]; do
-    ./slipcat
+    ./slipcat $@
 done
