@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2018, Intel Corporation.
+ * Copyright © 2017-2019, Intel Corporation.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU Lesser General Public License,
@@ -457,16 +457,18 @@ static void sl_data_flow(sl_op_t op)
 	data_free(&data);
 }
 
+/*
+ * In order to make management of multiple mutually exclusive presets easier,
+ * everything is disabled. For a default case (AF_UNIX+SLIP), relevant
+ * toggles need to be enabled explicitly.
+ * TODO: Have another look at this approach, there might be cleaner ways.
+ */
 static void defaults_config(void)
 {
 	opt_af_unix = 1;
 	opt_af_unix_path = "/tmp/slip.sock";
 
 	opt_slip = 1;
-
-	opt_trace = 1;
-	opt_trace_addr = "127.0.0.1";
-	opt_trace_port = 5555;
 
 	opt_udp = 1;
 	opt_udp_src_addr = "127.0.0.1";
