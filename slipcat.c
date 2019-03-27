@@ -25,6 +25,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <netinet/ether.h>
+
+#include <linux/if.h>
+#include <linux/if_tun.h>
+
 #include <glib.h>
 
 #include "slipcat.h"
@@ -62,6 +67,7 @@ static int opt_tcp;
 static int opt_af_unix;
 static int opt_pty;
 static int opt_slip;
+static char *opt_tap;
 static int opt_udp;
 static int opt_trace;
 
@@ -69,6 +75,8 @@ static char *opt_tcp_src_addr;
 static int opt_tcp_src_port;
 static char *opt_af_unix_path;
 static char *opt_pty_path;
+static char *opt_tap_mac;
+
 static char *opt_udp_src_addr;
 static int opt_udp_src_port;
 static char *opt_udp_dst_addr;
@@ -263,6 +271,134 @@ int pty(sl_t *s, sl_op_t op, sl_data_t **data)
 	return TRUE;
 }
 
+int sysf(const char *fmt, ...)
+{
+	va_list ap;
+	char cmd[128];
+	va_start(ap, fmt);
+	vsnprintf(cmd, sizeof(cmd), fmt, ap);
+	va_end(ap);
+	D("%s", cmd);
+	return system(cmd);
+}
+
+void tap_config(const char *dev)
+{
+	if (opt_tap_mac) {
+		sysf("ifconfig %s hw ether %s", dev, opt_tap_mac);
+	}
+
+	sysf("ifconfig %s up", dev);
+	sysf("ifconfig %s -multicast", dev);
+	sysf("sysctl -w net.ipv6.conf.%s.disable_ipv6=1", dev);
+
+	sysf("ip route add %s dev %s", opt_tap, dev);
+
+	sysf("ifconfig %s", dev);
+}
+
+int tap_init(void)
+{
+	struct ifreq *ifr = calloc(1, sizeof(struct ifreq));;
+	int fd = open("/dev/net/tun", O_RDWR);
+
+	if (fd == -1)
+		E("open");
+
+	ifr->ifr_flags = IFF_TAP | IFF_NO_PI;
+
+	if((ioctl(fd, TUNSETIFF, ifr)) < 0)
+		E("ioctl");
+
+	D("fd: %d, name: %s", fd, ifr->ifr_name);
+
+	tap_config(ifr->ifr_name);
+
+	free(ifr);
+
+	return fd;
+}
+
+const char *h_proto_to_string(uint16_t h_proto)
+{
+	static char s[32];
+
+#define _(x) case x: return #x
+
+	switch (h_proto) {
+	_(ETHERTYPE_IP);
+	_(ETHERTYPE_ARP);
+	_(ETHERTYPE_VLAN);
+	_(ETHERTYPE_IPV6);
+	default:
+		snprintf(s, sizeof(s), "0x%hx", h_proto);
+	}
+#undef _
+	return s;
+}
+
+void arp_reply(sl_data_t *nb, struct ethhdr *eth_req, struct ether_arp *arp_req)
+{
+	struct ethhdr *eth = (void *) nb->data;
+	struct ether_arp *arp = (void *) (eth + 1);
+
+	nb->len = sizeof(struct ethhdr) + sizeof(struct ether_arp);
+
+	memset(nb->data, 0, nb->len);
+
+	memcpy(&eth->h_source, ether_aton(opt_tap_mac), ETH_ALEN);
+	memcpy(&eth->h_dest, &eth_req->h_source, ETH_ALEN);
+	eth->h_proto = htons(ETHERTYPE_ARP);
+
+	arp->arp_hrd = htons(ARPHRD_ETHER);
+	arp->arp_pro = htons(ETHERTYPE_IP);
+	arp->arp_pln = 4;
+
+	arp->arp_hln = ETH_ALEN;
+	arp->arp_op = htons(ARPOP_REPLY);
+
+	memcpy(&arp->arp_sha, ether_aton(opt_tap_mac), ETH_ALEN);
+	memcpy(&arp->arp_spa, &arp_req->arp_tpa, sizeof(arp->arp_spa));
+
+	memcpy(&arp->arp_tha, &arp_req->arp_sha, ETH_ALEN);
+	memcpy(&arp->arp_tpa, &arp_req->arp_spa, sizeof(arp->arp_tpa));
+}
+
+int tap(sl_t *s, sl_op_t op, sl_data_t **data)
+{
+	sl_data_t *d = *data;
+	struct ethhdr *eth;
+	switch (op) {
+	case SL_OP_UP:
+		if ((d->len = read(s->fd, d->data, BUF_MAXSIZE)) < 0)
+			W("read");
+
+		if (d->len) {
+			D("len=%zd", d->len);
+		}
+
+		eth = (void *) d->data;
+
+		D("h_proto=0x%hx %s", ntohs(eth->h_proto),
+			h_proto_to_string(ntohs(eth->h_proto)));
+
+		if (ntohs(eth->h_proto) == ETHERTYPE_ARP) {
+			struct ether_arp *arp_req = (void *) (eth + 1);
+			sl_data_t *nb = data_new();
+			ssize_t bytes_written;
+			arp_reply(nb, eth, arp_req);
+			bytes_written = write(s->fd, nb->data, nb->len);
+		}
+
+		break;
+	case SL_OP_DOWN:
+		if ((write(s->fd, d->data, d->len)) < 0)
+			W("write");
+		break;
+	}
+	return TRUE;
+}
+
 int af_unix(sl_t *s, sl_op_t op, sl_data_t **data)
 {
 	sl_data_t *d = *data;
@@ -425,6 +561,12 @@ static void sl_config(void)
 		D("fd=%d", s->fd);
 	}
 
+	if (opt_tap) {
+		s = sl_new("tap", tap);
+		s->fd = tap_init();
+		D("fd=%d", s->fd);
+	}
+
 	if (opt_slip) {
 		s = sl_new("slip", slip);
 		s->user_data = libslip_init();
@@ -447,7 +589,10 @@ static void sl_data_flow(sl_op_t op)
 						S_QUEUE_TAIL(&sl_queue);
 	sl_data_t *data;
 
-	if (!fd_is_readable_old(s->fd))
+	if (opt_tap) {
+		if (!fd_is_readable(s->fd))
+			return;
+	} else if (!fd_is_readable_old(s->fd))
 		return;
 
 	data = data_new();
@@ -498,6 +643,8 @@ static void configuration_print(void)
 		P("pty: path=%s", opt_pty_path);
 	}
 
+	P("tap: %s", opt_tap ? "Enabled" : "Disabled");
+
 	P("slip: %s", opt_slip ? "Enabled" : "Disabled");
 	P("trace: %s", opt_trace ? "Enabled" : "Disabled");
 
@@ -536,6 +683,12 @@ static void options_parse(int *argc, char **argv[])
 		{ "pty-path", 0, 0, G_OPTION_ARG_STRING,
 		  &opt_pty_path,
 		  "Pseudoterminal pathname", NULL },
+
+		{ "tap", 0, 0, G_OPTION_ARG_STRING, &opt_tap,
+		  "Enable TAP interface and setup a route to it "
+		  "in a form 1.2.3.4/24 (the netmask is optional)", NULL },
+		{ "tap-mac", 0, 0, G_OPTION_ARG_STRING, &opt_tap_mac,
+		  "TAP interface MAC address, optional", NULL },
 
 		{ "tcp", 0, 0, G_OPTION_ARG_INT, &opt_tcp,
 		  "Enable TCP socket", NULL },
@@ -576,6 +729,11 @@ static void options_parse(int *argc, char **argv[])
 
 	if (opt_tcp && opt_af_unix) {
 		_E("TCP and AF_UNIX sockets are mutually exclusive");
+	}
+
+	if (opt_tap) {
+		opt_af_unix = 0;
+		opt_slip = 0;
 	}
 }
 
