@@ -22,6 +22,7 @@
 #include <fcntl.h>
 #include <getopt.h>
 #include <pty.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -112,39 +113,35 @@ void data_free(sl_data_t **d)
 	*d = NULL;
 }
 
-int fd_is_readable_old(int fd)
+bool fd_is_readable_old(int fd)
 {
 	uint8_t byte;
 	ssize_t r = recv(fd, &byte, 1, MSG_PEEK | MSG_DONTWAIT);
-	if (r == 0)
+
+	if (r <= 0) { /* r == 0: socket closed, exit, loop-socat restarts us */
 		E("recv");
+	}
 
 	return (r > 0);
 }
 
-int fd_is_readable(int fd)
+bool fd_is_readable(int fd)
 {
-	fd_set fd_read;
-	struct timeval tv;
+	struct timeval tv = { .tv_sec = 0, .tv_usec = 1000 /* microseconds */};
 	int nfds_ready;
+	fd_set fd_read;
 
 	FD_ZERO(&fd_read);
 	FD_SET(fd, &fd_read);
 
-	tv.tv_sec = 0;
-	tv.tv_usec = 1000;
-
 	nfds_ready = select(fd + 1, &fd_read, NULL, NULL, &tv);
 
-	if (nfds_ready <= 0) {
-		if (nfds_ready < 0) {
-			E("select");
-		}
+	if (nfds_ready < 0) {
+		E("select");
 	}
 
 	return (nfds_ready > 0);
 }
-
 
 void *s_in(const char *addr, uint16_t port)
 {
