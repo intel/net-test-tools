@@ -9,7 +9,7 @@ AM_MAINTAINER_MODE
 
 LT_INIT([dlopen])
 
-AC_PROG_CC
+AC_PROG_CC_C99
 
 PKG_CHECK_MODULES([deps], [glib-2.0],
 	AC_SUBST([deps_CFLAGS])
