@@ -113,12 +113,18 @@ void data_free(sl_data_t **d)
 	*d = NULL;
 }
 
+/*
+ * This function is a dual purpose. Its' second purpose is to detect
+ * the TCP client disconnect without doing a read() on it.
+ * NOTE: It should only be used for TCP sockets.
+ * TODO: Check if there's any better way of achieving this.
+ */
 bool fd_is_readable_old(int fd)
 {
 	uint8_t byte;
 	ssize_t r = recv(fd, &byte, 1, MSG_PEEK | MSG_DONTWAIT);
 
-	if (r <= 0) { /* r == 0: socket closed, exit, loop-socat restarts us */
+	if (r == 0) { /* TCP socket closed, exit. loop-socat.sh restarts us */
 		E("recv");
 	}
 
