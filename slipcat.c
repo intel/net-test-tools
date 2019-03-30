@@ -37,19 +37,30 @@
 #include "libslip.h"
 #include "queue.h"
 
-#define BUF_MAXSIZE 8192
 #define S_IN_SIZE sizeof(struct sockaddr_in)
+
+#define NSIZE 8192
+#define NLEN (NSIZE - sizeof(struct n_hdr))
+
+struct n_hdr {
+	void *nh_data;
+	ssize_t nh_len;
+};
+
+struct nbuf {
+	struct n_hdr n_hdr;
+	uint8_t buf[NLEN];
+};
+
+#define n_len	n_hdr.nh_len
+#define n_data	n_hdr.nh_data
+
+typedef struct nbuf sl_data_t;
 
 typedef enum {
 	SL_OP_UP,
 	SL_OP_DOWN
 } sl_op_t;
-
-typedef struct {
-	uint8_t *data;
-	ssize_t len;
-	uint8_t buf[BUF_MAXSIZE];
-} sl_data_t;
 
 typedef struct sl sl_t;
 
@@ -89,19 +100,19 @@ static S_QUEUE(sl) sl_queue;
 
 sl_data_t *data_new(void)
 {
-	sl_data_t *d = malloc(sizeof(*d));
+	struct nbuf *nb = malloc(sizeof(struct nbuf));
 
-	d->data = d->buf;
-	d->len = BUF_MAXSIZE;
+	nb->n_data = nb->buf;
+	nb->n_len = NLEN;
 
-	return d;
+	return nb;
 }
 
 sl_data_t *data_new_from_bytes(uint8_t *data, ssize_t data_len)
 {
 	sl_data_t *d = data_new();
 
-	memcpy(d->data, data, d->len = data_len);
+	memcpy(d->n_data, data, d->n_len = data_len);
 
 	return d;
 }
@@ -259,15 +270,15 @@ int pty(sl_t *s, sl_op_t op, sl_data_t **data)
 	sl_data_t *d = *data;
 	switch (op) {
 	case SL_OP_UP:
-		if ((d->len = read(s->fd, d->data, 1)) < 0)
+		if ((d->n_len = read(s->fd, d->n_data, 1)) < 0)
 			W("read");
-		if (d->len) {
-			D("len=%zd", d->len);
+		if (d->n_len) {
+			D("len=%zd", d->n_len);
 		}
 
 		break;
 	case SL_OP_DOWN:
-		if ((write(s->fd, d->data, d->len)) < 0)
+		if ((write(s->fd, d->n_data, d->n_len)) < 0)
 			W("write");
 		break;
 	}
@@ -342,12 +353,12 @@ const char *h_proto_to_string(uint16_t h_proto)
 
 void arp_reply(sl_data_t *nb, struct ethhdr *eth_req, struct ether_arp *arp_req)
 {
-	struct ethhdr *eth = (void *) nb->data;
+	struct ethhdr *eth = nb->n_data;
 	struct ether_arp *arp = (void *) (eth + 1);
 
-	nb->len = sizeof(struct ethhdr) + sizeof(struct ether_arp);
+	nb->n_len = sizeof(struct ethhdr) + sizeof(struct ether_arp);
 
-	memset(nb->data, 0, nb->len);
+	memset(nb->n_data, 0, nb->n_len);
 
 	memcpy(&eth->h_source, ether_aton(opt_tap_mac), ETH_ALEN);
 	memcpy(&eth->h_dest, &eth_req->h_source, ETH_ALEN);
@@ -373,14 +384,14 @@ int tap(sl_t *s, sl_op_t op, sl_data_t **data)
 	struct ethhdr *eth;
 	switch (op) {
 	case SL_OP_UP:
-		if ((d->len = read(s->fd, d->data, BUF_MAXSIZE)) < 0)
+		if ((d->n_len = read(s->fd, d->n_data, NLEN)) < 0)
 			W("read");
 
-		if (d->len) {
-			D("len=%zd", d->len);
+		if (d->n_len) {
+			D("len=%zd", d->n_len);
 		}
 
-		eth = (void *) d->data;
+		eth = d->n_data;
 
 		D("h_proto=0x%hx %s", ntohs(eth->h_proto),
 			h_proto_to_string(ntohs(eth->h_proto)));
@@ -390,12 +401,12 @@ int tap(sl_t *s, sl_op_t op, sl_data_t **data)
 			sl_data_t *nb = data_new();
 			ssize_t bytes_written;
 			arp_reply(nb, eth, arp_req);
-			bytes_written = write(s->fd, nb->data, nb->len);
+			bytes_written = write(s->fd, nb->n_data, nb->n_len);
 		}
 
 		break;
 	case SL_OP_DOWN:
-		if ((write(s->fd, d->data, d->len)) < 0)
+		if ((write(s->fd, d->n_data, d->n_len)) < 0)
 			W("write");
 		break;
 	}
@@ -407,11 +418,11 @@ int af_unix(sl_t *s, sl_op_t op, sl_data_t **data)
 	sl_data_t *d = *data;
 	switch (op) {
 	case SL_OP_UP:
-		if ((d->len = read(s->fd, d->data, 1)) < 0)
+		if ((d->n_len = read(s->fd, d->n_data, 1)) < 0)
 			W("read");
 		break;
 	case SL_OP_DOWN:
-		if ((write(s->fd, d->data, d->len)) < 0)
+		if ((write(s->fd, d->n_data, d->n_len)) < 0)
 			W("write");
 		break;
 	}
@@ -427,7 +438,8 @@ int slip(sl_t *s, sl_op_t op, sl_data_t **data)
 		uint8_t *out;
 		ssize_t out_len;
 
-		if (libslip_input(s->user_data, *(d->data), &out, &out_len)) {
+		if (libslip_input(s->user_data, *((uint8_t *) d->n_data),
+					&out, &out_len)) {
 
 			sl_data_t *o = data_new_from_bytes(out, out_len);
 
@@ -442,7 +454,7 @@ int slip(sl_t *s, sl_op_t op, sl_data_t **data)
 	case SL_OP_DOWN: {
 		sl_data_t *out = data_new();
 
-		libslip_output(d->data, d->len, out->data, &out->len);
+		libslip_output(d->n_data, d->n_len, out->n_data, &out->n_len);
 
 		data_free(data);
 
@@ -461,11 +473,11 @@ int tcp(sl_t *s, sl_op_t op, sl_data_t **data)
 	switch (op) {
 	case SL_OP_UP:
 		D("");
-		if ((d->len = read(s->fd, d->data, 1)) < 0)
+		if ((d->n_len = read(s->fd, d->n_data, 1)) < 0)
 			W("read");
 		break;
 	case SL_OP_DOWN:
-		if ((write(s->fd, d->data, d->len)) < 0)
+		if ((write(s->fd, d->n_data, d->n_len)) < 0)
 			W("write");
 		break;
 	}
@@ -518,13 +530,13 @@ int udp(sl_t *s, sl_op_t op, sl_data_t **data)
 	sl_data_t *d = *data;
 	switch (op) {
 	case SL_OP_UP:
-		if (sendto(s->fd, d->data, d->len, 0,
+		if (sendto(s->fd, d->n_data, d->n_len, 0,
 				s_in(opt_udp_dst_addr, opt_udp_dst_port),
 				S_IN_SIZE) < 0)
 			W("sendto");
 		break;
 	case SL_OP_DOWN:
-		if ((d->len = read(s->fd, d->data, d->len)) < 0)
+		if ((d->n_len = read(s->fd, d->n_data, d->n_len)) < 0)
 			W("read");
 		break;
 	}
@@ -535,7 +547,7 @@ int trace(sl_t *s, sl_op_t op, sl_data_t **data)
 {
 	sl_data_t *d = *data;
 
-	if (sendto(s->fd, d->data, d->len, 0,
+	if (sendto(s->fd, d->n_data, d->n_len, 0,
 			s_in(opt_trace_addr, opt_trace_port), S_IN_SIZE) < 0)
 		W("sendto");
 
