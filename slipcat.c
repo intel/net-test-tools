@@ -74,7 +74,7 @@ struct sl {
 
 static int opt_debug = 1;
 static int opt_tcp;
-static int opt_af_unix;
+static char *opt_af_unix;
 static int opt_pty;
 static int opt_slip;
 static char *opt_tap;
@@ -83,7 +83,6 @@ static int opt_trace;
 
 static char *opt_tcp_src_addr;
 static int opt_tcp_src_port;
-static char *opt_af_unix_path;
 static char *opt_pty_path;
 static char *opt_tap_mac;
 
@@ -212,20 +211,19 @@ int af_unix_init(void)
 			&v, sizeof(v)) == -1)
 		E("setsockopt");
 
-	if (stat(opt_af_unix_path, &st) != -1) {
-		if (unlink(opt_af_unix_path))
+	if (stat(opt_af_unix, &st) != -1) {
+		if (unlink(opt_af_unix))
 			E("unlink");
 	}
 
 	{
 		struct sockaddr_un su;
-		socklen_t su_len = sizeof(struct sockaddr_un);;
+		socklen_t su_len = sizeof(struct sockaddr_un);
 
 		memset(&su, 0, sizeof(su));
 
 		su.sun_family = AF_UNIX;
-		strncpy(su.sun_path, opt_af_unix_path,
-			strlen(opt_af_unix_path));
+		strncpy(su.sun_path, opt_af_unix, strlen(opt_af_unix));
 
 		if (bind(s, (void *) &su, su_len) == -1)
 			E("bind");
@@ -629,8 +627,7 @@ static void sl_data_flow(sl_op_t op)
  */
 static void defaults_config(void)
 {
-	opt_af_unix = 1;
-	opt_af_unix_path = "/tmp/slip.sock";
+	opt_af_unix = "/tmp/slip.sock";
 
 	opt_slip = 1;
 
@@ -643,11 +640,7 @@ static void defaults_config(void)
 
 static void configuration_print(void)
 {
-	P("af_unix: %s", opt_af_unix ? "Enabled" : "Disabled");
-
-	if (opt_af_unix) {
-		P("af_unix: path=%s", opt_af_unix_path);
-	}
+	P("af_unix: %s", opt_af_unix ? opt_af_unix : "Disabled");
 
 	P("tcp: %s", opt_tcp ? "Enabled" : "Disabled");
 
@@ -691,10 +684,7 @@ static void options_parse(int *argc, char **argv[])
 		{ "debug", 'd', 0, G_OPTION_ARG_INT, &opt_debug,
 		  "Enable debug", NULL },
 
-		{ "af-unix", 0, 0, G_OPTION_ARG_INT, &opt_af_unix,
-		  "Enable AF_UNIX socket", NULL },
-		{ "af-unix-path", 0, 0, G_OPTION_ARG_STRING,
-		  &opt_af_unix_path,
+		{ "af-unix", 0, 0, G_OPTION_ARG_STRING, &opt_af_unix,
 		  "AF_UNIX socket pathname", NULL },
 
 		{ "pty", 0, 0, G_OPTION_ARG_INT, &opt_pty,
