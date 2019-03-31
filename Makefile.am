@@ -39,7 +39,7 @@ TESTS = \
 	tests/queue-12.txt \
 	tests/queue-13.txt
 
-LOG_COMPILER = tests/test-wrapper.sh
+LOG_COMPILER = $(srcdir)/tests/test-wrapper.sh
 
 MAINTAINERCLEANFILES = Makefile.in \
 	aclocal.m4 compile configure config.guess config.sub depcomp missing \
