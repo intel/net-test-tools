@@ -482,16 +482,22 @@ int tcp(sl_t *s, sl_op_t op, struct nbuf **data)
 	return true;
 }
 
+/**
+ * Open the TCP socket and wait for connection
+ */
 int tcp_init(const char *addr, int port)
 {
 	int s;
-	int v = 1;
 
 	if ((s = socket(AF_INET, SOCK_STREAM, 0)) == -1)
 		E("socket");
 
-	if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &v, sizeof(v)) == -1)
-		E("setsockopt");
+	{
+		int optval = 1;
+		if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR,
+				&optval, sizeof(optval)) == -1)
+			E("setsockopt");
+	}
 
 	if (bind(s, s_in(addr, port), S_IN_SIZE) == -1)
 		E("bind");
