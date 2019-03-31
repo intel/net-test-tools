@@ -184,13 +184,13 @@ sl_t *sl_new(const char *name, sl_cb_t *cb)
 
 int sl_send(sl_t *s, sl_op_t op, struct nbuf **d)
 {
-	int ret = FALSE;
+	int ret = false;
 
 	while (s) {
 
 		ret = s->cb(s, op, d);
 
-		if (ret != TRUE)
+		if (ret != true)
 			break;
 
 		s = (SL_OP_UP == op) ? S_QUEUE_NEXT(s, e) : S_QUEUE_PREV(s, e);
@@ -280,7 +280,7 @@ int pty(sl_t *s, sl_op_t op, struct nbuf **data)
 			W("write");
 		break;
 	}
-	return TRUE;
+	return true;
 }
 
 int sysf(const char *fmt, ...)
@@ -408,7 +408,7 @@ int tap(sl_t *s, sl_op_t op, struct nbuf **data)
 			W("write");
 		break;
 	}
-	return TRUE;
+	return true;
 }
 
 int af_unix(sl_t *s, sl_op_t op, struct nbuf **data)
@@ -424,7 +424,7 @@ int af_unix(sl_t *s, sl_op_t op, struct nbuf **data)
 			W("write");
 		break;
 	}
-	return TRUE;
+	return true;
 }
 
 int slip(sl_t *s, sl_op_t op, struct nbuf **data)
@@ -445,7 +445,7 @@ int slip(sl_t *s, sl_op_t op, struct nbuf **data)
 
 			*data = o;
 
-			ret = TRUE;
+			ret = true;
 		}
 		break;
 	}
@@ -458,7 +458,7 @@ int slip(sl_t *s, sl_op_t op, struct nbuf **data)
 
 		*data = out;
 
-		ret = TRUE;
+		ret = true;
 
 		break;
 	}}
@@ -479,7 +479,7 @@ int tcp(sl_t *s, sl_op_t op, struct nbuf **data)
 			W("write");
 		break;
 	}
-	return TRUE;
+	return true;
 }
 
 int tcp_init(const char *addr, int port)
@@ -538,7 +538,7 @@ int udp(sl_t *s, sl_op_t op, struct nbuf **data)
 			W("read");
 		break;
 	}
-	return TRUE;
+	return true;
 }
 
 int trace(sl_t *s, sl_op_t op, struct nbuf **data)
@@ -549,7 +549,7 @@ int trace(sl_t *s, sl_op_t op, struct nbuf **data)
 			s_in(opt_trace_addr, opt_trace_port), S_IN_SIZE) < 0)
 		W("sendto");
 
-	return TRUE;
+	return true;
 }
 
 static void sl_config(void)
