@@ -122,9 +122,8 @@ void data_free(struct nbuf **d)
 }
 
 /*
- * This function is a dual purpose. Its' second purpose is to detect
+ * This function has 2 purposes. Its' second purpose is to detect
  * the TCP client disconnect without doing a read() on it.
- * NOTE: It should only be used for TCP sockets.
  * TODO: Check if there's any better way of achieving this.
  */
 bool fd_is_readable_old(int fd)
