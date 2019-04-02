@@ -75,7 +75,7 @@ struct sl {
 static int opt_debug = 1;
 static int opt_tcp;
 static char *opt_af_unix;
-static int opt_pty;
+static char *opt_pty;
 static int opt_slip;
 static char *opt_tap;
 static int opt_udp;
@@ -83,7 +83,6 @@ static int opt_trace;
 
 static char *opt_tcp_src_addr;
 static int opt_tcp_src_port;
-static char *opt_pty_path;
 static char *opt_tap_mac;
 
 static char *opt_udp_src_addr;
@@ -244,7 +243,7 @@ int af_unix_init(void)
 
 int pty_init(void)
 {
-	int fd = open(opt_pty_path, O_RDWR);
+	int fd = open(opt_pty, O_RDWR);
 
 	if (fd == -1)
 		E("open");
@@ -648,11 +647,7 @@ static void configuration_print(void)
 			opt_tcp_src_addr, opt_tcp_src_port);
 	}
 
-	P("pty: %s", opt_pty ? "Enabled" : "Disabled");
-
-	if (opt_pty) {
-		P("pty: path=%s", opt_pty_path);
-	}
+	P("pty: %s", opt_pty ? opt_pty : "Disabled");
 
 	P("tap: %s", opt_tap ? "Enabled" : "Disabled");
 
@@ -686,10 +681,7 @@ static void options_parse(int *argc, char **argv[])
 		{ "af-unix", 0, 0, G_OPTION_ARG_STRING, &opt_af_unix,
 		  "AF_UNIX socket pathname", NULL },
 
-		{ "pty", 0, 0, G_OPTION_ARG_INT, &opt_pty,
-		  "Enable pseudoterminal", NULL },
-		{ "pty-path", 0, 0, G_OPTION_ARG_STRING,
-		  &opt_pty_path,
+		{ "pty", 0, 0, G_OPTION_ARG_STRING, &opt_pty,
 		  "Pseudoterminal pathname", NULL },
 
 		{ "tap", 0, 0, G_OPTION_ARG_STRING, &opt_tap,
