@@ -77,10 +77,10 @@ int libslip_input(libslip_t *l, uint8_t in, uint8_t **out, size_t *out_len)
 	return (s->end) && (s->len);
 }
 
-void libslip_output(uint8_t *in, size_t len, uint8_t *out, size_t *out_len)
+void libslip_output(uint8_t *in, size_t in_len, uint8_t *out, size_t *out_len)
 {
 	int i, j;
-	for(i = j = 0; i < len; i++) {
+	for(i = j = 0; i < in_len; i++) {
 		switch(in[i]) {
 		case SLIP_END:
 			out[j++] = SLIP_ESC;
