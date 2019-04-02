@@ -253,26 +253,6 @@ int pty_init(void)
 	return fd;
 }
 
-int pty(sl_t *s, n_op_t op, struct nbuf **data)
-{
-	struct nbuf *d = *data;
-	switch (op) {
-	case N_UP:
-		if ((d->n_len = read(s->fd, d->n_data, 1)) < 0)
-			W("read");
-		if (d->n_len) {
-			D("len=%zd", d->n_len);
-		}
-
-		break;
-	case N_DOWN:
-		if ((write(s->fd, d->n_data, d->n_len)) < 0)
-			W("write");
-		break;
-	}
-	return true;
-}
-
 int sysf(const char *fmt, ...)
 {
 	va_list ap;
@@ -403,22 +383,6 @@ int tap(sl_t *s, n_op_t op, struct nbuf **data)
 	return true;
 }
 
-int af_unix(sl_t *s, n_op_t op, struct nbuf **data)
-{
-	struct nbuf *d = *data;
-	switch (op) {
-	case N_UP:
-		if ((d->n_len = read(s->fd, d->n_data, 1)) < 0)
-			W("read");
-		break;
-	case N_DOWN:
-		if ((write(s->fd, d->n_data, d->n_len)) < 0)
-			W("write");
-		break;
-	}
-	return true;
-}
-
 int slip(sl_t *s, n_op_t op, struct nbuf **data)
 {
 	struct nbuf *d = *data;
@@ -464,7 +428,6 @@ int tcp(sl_t *s, n_op_t op, struct nbuf **data)
 	struct nbuf *d = *data;
 	switch (op) {
 	case N_UP:
-		D("");
 		if ((d->n_len = read(s->fd, d->n_data, 1)) < 0)
 			W("read");
 		break;
@@ -563,12 +526,12 @@ static void sl_config(void)
 	}
 
 	if (opt_af_unix) {
-		s = sl_new("af_unix", af_unix);
+		s = sl_new("af_unix", tcp);
 		s->fd = af_unix_init();
 	}
 
 	if (opt_pty) {
-		s = sl_new("pty", pty);
+		s = sl_new("pty", tcp);
 		s->fd = pty_init();
 	}
 
