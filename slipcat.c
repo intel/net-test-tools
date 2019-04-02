@@ -96,10 +96,10 @@ static S_QUEUE(sl) sl_queue;
 
 struct nbuf *data_new(void)
 {
-	struct nbuf *nb = malloc(sizeof(struct nbuf));
+	struct nbuf *nb = malloc(sizeof(*nb));
 
+	nb->n_len = 0;
 	nb->n_data = nb->buf;
-	nb->n_len = NLEN;
 
 	return nb;
 }
@@ -536,7 +536,7 @@ int udp(sl_t *s, sl_op_t op, struct nbuf **data)
 			W("sendto");
 		break;
 	case SL_OP_DOWN:
-		if ((d->n_len = read(s->fd, d->n_data, d->n_len)) < 0)
+		if ((d->n_len = read(s->fd, d->n_data, NLEN)) < 0)
 			W("read");
 		break;
 	}
