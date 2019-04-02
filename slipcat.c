@@ -228,6 +228,7 @@ int af_unix_init(void)
 		if ((fd = accept(s, (void *) &sin, &sin_size)) == -1)
 			E("accept");
 		close(s);
+		D("fd=%d", fd);
 		return fd;
 	}
 }
@@ -246,6 +247,8 @@ int pty_init(void)
 
 		tcsetattr(fd, TCSANOW, &ts);
 	}
+
+	D("fd=%d", fd);
 
 	return fd;
 }
@@ -314,6 +317,8 @@ int tap_init(void)
 	tap_config(ifr->ifr_name);
 
 	free(ifr);
+
+	D("fd=%d", fd);
 
 	return fd;
 }
@@ -501,6 +506,7 @@ int tcp_init(const char *addr, int port)
 		if ((fd = accept(s, (void *) &sin, &sin_size)) == -1)
 			E("accept");
 		close(s);
+		D("fd=%d", fd);
 		return fd;
 	}
 }
@@ -554,25 +560,21 @@ static void sl_config(void)
 	if (opt_tcp) {
 		s = sl_new("tcp", tcp);
 		s->fd = tcp_init(opt_tcp_src_addr, opt_tcp_src_port);
-		D("fd=%d", s->fd);
 	}
 
 	if (opt_af_unix) {
 		s = sl_new("af_unix", af_unix);
 		s->fd = af_unix_init();
-		D("fd=%d", s->fd);
 	}
 
 	if (opt_pty) {
 		s = sl_new("pty", pty);
 		s->fd = pty_init();
-		D("fd=%d", s->fd);
 	}
 
 	if (opt_tap) {
 		s = sl_new("tap", tap);
 		s->fd = tap_init();
-		D("fd=%d", s->fd);
 	}
 
 	if (opt_slip) {
