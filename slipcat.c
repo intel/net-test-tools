@@ -94,7 +94,7 @@ static int opt_trace_port;
 
 static S_QUEUE(sl) sl_queue;
 
-struct nbuf *data_new(void)
+struct nbuf *nbuf_new(void)
 {
 	struct nbuf *nb = malloc(sizeof(*nb));
 
@@ -104,7 +104,7 @@ struct nbuf *data_new(void)
 	return nb;
 }
 
-void data_free(struct nbuf **d)
+void nbuf_free(struct nbuf **d)
 {
 	free(*d);
 
@@ -383,7 +383,7 @@ int tap(sl_t *s, sl_op_t op, struct nbuf **data)
 
 		if (ntohs(eth->h_proto) == ETHERTYPE_ARP) {
 			struct ether_arp *arp_req = (void *) (eth + 1);
-			struct nbuf *nb = data_new();
+			struct nbuf *nb = nbuf_new();
 			ssize_t bytes_written;
 			arp_reply(nb, eth, arp_req);
 			bytes_written = write(s->fd, nb->n_data, nb->n_len);
@@ -426,11 +426,11 @@ int slip(sl_t *s, sl_op_t op, struct nbuf **data)
 		if (libslip_input(s->user_data, *((uint8_t *) d->n_data),
 					&out, &out_len)) {
 
-			struct nbuf *o = data_new();
+			struct nbuf *o = nbuf_new();
 
 			memcpy(o->n_data, out, o->n_len = out_len);
 
-			data_free(data);
+			nbuf_free(data);
 
 			*data = o;
 
@@ -439,11 +439,11 @@ int slip(sl_t *s, sl_op_t op, struct nbuf **data)
 		break;
 	}
 	case SL_OP_DOWN: {
-		struct nbuf *out = data_new();
+		struct nbuf *out = nbuf_new();
 
 		libslip_output(d->n_data, d->n_len, out->n_data, &out->n_len);
 
-		data_free(data);
+		nbuf_free(data);
 
 		*data = out;
 
@@ -603,11 +603,11 @@ static void sl_data_flow(sl_op_t op)
 	} else if (!fd_is_readable_old(s->fd))
 		return;
 
-	data = data_new();
+	data = nbuf_new();
 
 	sl_send(s, op, &data);
 
-	data_free(&data);
+	nbuf_free(&data);
 }
 
 /*
