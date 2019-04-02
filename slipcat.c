@@ -56,13 +56,13 @@ struct nbuf {
 #define n_data	n_hdr.nh_data
 
 typedef enum {
-	SL_OP_UP,
-	SL_OP_DOWN
-} sl_op_t;
+	N_UP,
+	N_DOWN
+} n_op_t;
 
 typedef struct sl sl_t;
 
-typedef int (sl_cb_t)(sl_t *n, sl_op_t d, struct nbuf **data);
+typedef int (sl_cb_t)(sl_t *n, n_op_t d, struct nbuf **data);
 
 struct sl {
 	int fd;
@@ -170,7 +170,7 @@ sl_t *sl_new(const char *name, sl_cb_t *cb)
 	return s;
 }
 
-int sl_send(sl_t *s, sl_op_t op, struct nbuf **d)
+int sl_send(sl_t *s, n_op_t op, struct nbuf **d)
 {
 	int ret = false;
 
@@ -181,7 +181,7 @@ int sl_send(sl_t *s, sl_op_t op, struct nbuf **d)
 		if (ret != true)
 			break;
 
-		s = (SL_OP_UP == op) ? S_QUEUE_NEXT(s, e) : S_QUEUE_PREV(s, e);
+		s = (N_UP == op) ? S_QUEUE_NEXT(s, e) : S_QUEUE_PREV(s, e);
 	}
 
 	return ret;
@@ -250,11 +250,11 @@ int pty_init(void)
 	return fd;
 }
 
-int pty(sl_t *s, sl_op_t op, struct nbuf **data)
+int pty(sl_t *s, n_op_t op, struct nbuf **data)
 {
 	struct nbuf *d = *data;
 	switch (op) {
-	case SL_OP_UP:
+	case N_UP:
 		if ((d->n_len = read(s->fd, d->n_data, 1)) < 0)
 			W("read");
 		if (d->n_len) {
@@ -262,7 +262,7 @@ int pty(sl_t *s, sl_op_t op, struct nbuf **data)
 		}
 
 		break;
-	case SL_OP_DOWN:
+	case N_DOWN:
 		if ((write(s->fd, d->n_data, d->n_len)) < 0)
 			W("write");
 		break;
@@ -363,12 +363,12 @@ void arp_reply(struct nbuf *nb, struct ethhdr *eth_req, struct ether_arp *arp_re
 	memcpy(&arp->arp_tpa, &arp_req->arp_spa, sizeof(arp->arp_tpa));
 }
 
-int tap(sl_t *s, sl_op_t op, struct nbuf **data)
+int tap(sl_t *s, n_op_t op, struct nbuf **data)
 {
 	struct nbuf *d = *data;
 	struct ethhdr *eth;
 	switch (op) {
-	case SL_OP_UP:
+	case N_UP:
 		if ((d->n_len = read(s->fd, d->n_data, NLEN)) < 0)
 			W("read");
 
@@ -390,7 +390,7 @@ int tap(sl_t *s, sl_op_t op, struct nbuf **data)
 		}
 
 		break;
-	case SL_OP_DOWN:
+	case N_DOWN:
 		if ((write(s->fd, d->n_data, d->n_len)) < 0)
 			W("write");
 		break;
@@ -398,15 +398,15 @@ int tap(sl_t *s, sl_op_t op, struct nbuf **data)
 	return true;
 }
 
-int af_unix(sl_t *s, sl_op_t op, struct nbuf **data)
+int af_unix(sl_t *s, n_op_t op, struct nbuf **data)
 {
 	struct nbuf *d = *data;
 	switch (op) {
-	case SL_OP_UP:
+	case N_UP:
 		if ((d->n_len = read(s->fd, d->n_data, 1)) < 0)
 			W("read");
 		break;
-	case SL_OP_DOWN:
+	case N_DOWN:
 		if ((write(s->fd, d->n_data, d->n_len)) < 0)
 			W("write");
 		break;
@@ -414,12 +414,12 @@ int af_unix(sl_t *s, sl_op_t op, struct nbuf **data)
 	return true;
 }
 
-int slip(sl_t *s, sl_op_t op, struct nbuf **data)
+int slip(sl_t *s, n_op_t op, struct nbuf **data)
 {
 	struct nbuf *d = *data;
 	int ret = false;
 	switch (op) {
-	case SL_OP_UP: {
+	case N_UP: {
 		uint8_t *out;
 		ssize_t out_len;
 
@@ -438,7 +438,7 @@ int slip(sl_t *s, sl_op_t op, struct nbuf **data)
 		}
 		break;
 	}
-	case SL_OP_DOWN: {
+	case N_DOWN: {
 		struct nbuf *out = nbuf_new();
 
 		libslip_output(d->n_data, d->n_len, out->n_data, &out->n_len);
@@ -454,16 +454,16 @@ int slip(sl_t *s, sl_op_t op, struct nbuf **data)
 	return ret;
 }
 
-int tcp(sl_t *s, sl_op_t op, struct nbuf **data)
+int tcp(sl_t *s, n_op_t op, struct nbuf **data)
 {
 	struct nbuf *d = *data;
 	switch (op) {
-	case SL_OP_UP:
+	case N_UP:
 		D("");
 		if ((d->n_len = read(s->fd, d->n_data, 1)) < 0)
 			W("read");
 		break;
-	case SL_OP_DOWN:
+	case N_DOWN:
 		if ((write(s->fd, d->n_data, d->n_len)) < 0)
 			W("write");
 		break;
@@ -518,17 +518,17 @@ int udp_init(const char *addr, int port)
 	return s;
 }
 
-int udp(sl_t *s, sl_op_t op, struct nbuf **data)
+int udp(sl_t *s, n_op_t op, struct nbuf **data)
 {
 	struct nbuf *d = *data;
 	switch (op) {
-	case SL_OP_UP:
+	case N_UP:
 		if (sendto(s->fd, d->n_data, d->n_len, 0,
 				s_in(opt_udp_dst_addr, opt_udp_dst_port),
 				S_IN_SIZE) < 0)
 			W("sendto");
 		break;
-	case SL_OP_DOWN:
+	case N_DOWN:
 		if ((d->n_len = read(s->fd, d->n_data, NLEN)) < 0)
 			W("read");
 		break;
@@ -536,7 +536,7 @@ int udp(sl_t *s, sl_op_t op, struct nbuf **data)
 	return true;
 }
 
-int trace(sl_t *s, sl_op_t op, struct nbuf **data)
+int trace(sl_t *s, n_op_t op, struct nbuf **data)
 {
 	struct nbuf *d = *data;
 
@@ -591,9 +591,9 @@ static void sl_config(void)
 	}
 }
 
-static void sl_data_flow(sl_op_t op)
+static void sl_data_flow(n_op_t op)
 {
-	sl_t *s = (op == SL_OP_UP) ? S_QUEUE_HEAD(&sl_queue) :
+	sl_t *s = (op == N_UP) ? S_QUEUE_HEAD(&sl_queue) :
 						S_QUEUE_TAIL(&sl_queue);
 	struct nbuf *data;
 
@@ -743,9 +743,9 @@ int main(int argc, char *argv[])
 	sl_config();
 
 	for (;;) {
-		sl_data_flow(SL_OP_UP);
+		sl_data_flow(N_UP);
 
-		sl_data_flow(SL_OP_DOWN);
+		sl_data_flow(N_DOWN);
 
 		usleep(100/*us*/); /* TODO: switch to select() */
 	}
