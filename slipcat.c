@@ -170,23 +170,6 @@ sl_t *sl_new(const char *name, sl_cb_t *cb)
 	return s;
 }
 
-int sl_send(sl_t *s, n_op_t op, struct nbuf **d)
-{
-	int ret = false;
-
-	while (s) {
-
-		ret = s->cb(s, op, d);
-
-		if (ret != true)
-			break;
-
-		s = (N_UP == op) ? S_QUEUE_NEXT(s, e) : S_QUEUE_PREV(s, e);
-	}
-
-	return ret;
-}
-
 int af_unix_init(void)
 {
 	int s;
@@ -556,10 +539,17 @@ static void sl_config(void)
 	}
 }
 
+#define PROTO_FIRST(_q, _op) \
+	((N_UP == (_op)) ? S_QUEUE_HEAD((_q)) : S_QUEUE_TAIL((_q)))
+
+#define PROTO_NEXT(_q, _qe, _op)		     \
+	((N_UP == (_op)) ? S_QUEUE_NEXT((_q), _qe) : \
+		S_QUEUE_PREV((_q), _qe))
+
 static void sl_data_flow(n_op_t op)
 {
-	sl_t *s = (op == N_UP) ? S_QUEUE_HEAD(&sl_queue) :
-						S_QUEUE_TAIL(&sl_queue);
+	sl_t *s = PROTO_FIRST(&sl_queue, op);
+
 	struct nbuf *data;
 
 	if (opt_tap) {
@@ -570,7 +560,7 @@ static void sl_data_flow(n_op_t op)
 
 	data = nbuf_new();
 
-	sl_send(s, op, &data);
+	for ( ; s && s->cb(s, op, &data); s = PROTO_NEXT(s, e, op));
 
 	nbuf_free(&data);
 }
