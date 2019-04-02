@@ -675,8 +675,18 @@ static void options_parse(int *argc, char **argv[])
 
 	g_option_context_free(context);
 
-	if (opt_tcp && opt_af_unix) {
-		_E("TCP and AF_UNIX sockets are mutually exclusive");
+	{
+		bool ex[] = { opt_tcp, opt_af_unix, opt_pty, opt_tap };
+		int i, num_ex = 0;
+
+		for (i = 0; i < sizeof(ex) / sizeof(bool); i++) {
+			if (ex[i])
+				num_ex++;
+		}
+
+		if (num_ex > 1) {
+			_E("TCP, AF_UNIX, pty, tap are mutually exclusive");
+		}
 	}
 
 	if (opt_tap) {
