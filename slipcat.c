@@ -104,15 +104,6 @@ struct nbuf *data_new(void)
 	return nb;
 }
 
-struct nbuf *data_new_from_bytes(uint8_t *data, ssize_t data_len)
-{
-	struct nbuf *d = data_new();
-
-	memcpy(d->n_data, data, d->n_len = data_len);
-
-	return d;
-}
-
 void data_free(struct nbuf **d)
 {
 	free(*d);
@@ -435,7 +426,9 @@ int slip(sl_t *s, sl_op_t op, struct nbuf **data)
 		if (libslip_input(s->user_data, *((uint8_t *) d->n_data),
 					&out, &out_len)) {
 
-			struct nbuf *o = data_new_from_bytes(out, out_len);
+			struct nbuf *o = data_new();
+
+			memcpy(o->n_data, out, o->n_len = out_len);
 
 			data_free(data);
 
