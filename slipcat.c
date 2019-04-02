@@ -417,7 +417,7 @@ int af_unix(sl_t *s, sl_op_t op, struct nbuf **data)
 int slip(sl_t *s, sl_op_t op, struct nbuf **data)
 {
 	struct nbuf *d = *data;
-	int ret = FALSE;
+	int ret = false;
 	switch (op) {
 	case SL_OP_UP: {
 		uint8_t *out;
