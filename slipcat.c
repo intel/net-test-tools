@@ -104,11 +104,11 @@ struct nbuf *nbuf_new(void)
 	return nb;
 }
 
-void nbuf_free(struct nbuf **d)
+void nbuf_free(struct nbuf **nb)
 {
-	free(*d);
+	free(*nb);
 
-	*d = NULL;
+	*nb = NULL;
 }
 
 /*
@@ -550,19 +550,19 @@ static void sl_data_flow(n_op_t op)
 {
 	sl_t *s = PROTO_FIRST(&sl_queue, op);
 
-	struct nbuf *data;
-
 	if (opt_tap) {
 		if (!fd_is_readable(s->fd))
 			return;
 	} else if (!fd_is_readable_old(s->fd))
 		return;
 
-	data = nbuf_new();
+	{
+		struct nbuf *nb = nbuf_new();
 
-	for ( ; s && s->cb(s, op, &data); s = PROTO_NEXT(s, e, op));
+		for ( ; s && s->cb(s, op, &nb); s = PROTO_NEXT(s, e, op));
 
-	nbuf_free(&data);
+		nbuf_free(&nb);
+	}
 }
 
 /*
