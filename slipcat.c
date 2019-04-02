@@ -423,22 +423,6 @@ int slip(sl_t *s, n_op_t op, struct nbuf **data)
 	return ret;
 }
 
-int tcp(sl_t *s, n_op_t op, struct nbuf **data)
-{
-	struct nbuf *d = *data;
-	switch (op) {
-	case N_UP:
-		if ((d->n_len = read(s->fd, d->n_data, 1)) < 0)
-			W("read");
-		break;
-	case N_DOWN:
-		if ((write(s->fd, d->n_data, d->n_len)) < 0)
-			W("write");
-		break;
-	}
-	return true;
-}
-
 /**
  * Open the TCP socket and wait for connection
  */
@@ -472,6 +456,22 @@ int tcp_init(const char *addr, int port)
 		D("fd=%d", fd);
 		return fd;
 	}
+}
+
+int tcp(sl_t *s, n_op_t op, struct nbuf **data)
+{
+	struct nbuf *d = *data;
+	switch (op) {
+	case N_UP:
+		if ((d->n_len = read(s->fd, d->n_data, 1)) < 0)
+			W("read");
+		break;
+	case N_DOWN:
+		if ((write(s->fd, d->n_data, d->n_len)) < 0)
+			W("write");
+		break;
+	}
+	return true;
 }
 
 int udp_init(const char *addr, int port)
