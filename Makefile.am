@@ -11,15 +11,20 @@ libslip_la_SOURCES = $(libslip_sources)
 
 noinst_PROGRAMS = slipcat
 
-check_PROGRAMS = libslip-test queue-test
+check_PROGRAMS = libslip-test queue-test slipcat-test
 
 libslip_test_SOURCES = libslip-test.c $(libslip_sources)
 libslip_test_CFLAGS = $(AM_CFLAGS)
 
 queue_test_SOURCES = queue-test.c queue.h
 
-slipcat_SOURCES = slipcat.c slipcat.h $(libslip_sources)
+slipcat_sources = slipcat.c slipcat.h $(libslip_sources)
+
+slipcat_SOURCES = $(slipcat_sources)
 slipcat_CFLAGS = $(AM_CFLAGS)
+
+slipcat_test_SOURCES = slipcat-test.c $(slipcat_sources)
+slipcat_test_CFLAGS = $(AM_CFLAGS)
 
 TESTS = \
 	tests/slip-01.txt \
