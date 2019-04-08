@@ -689,11 +689,13 @@ static void options_parse(int *argc, char **argv[])
 		if (num_ex > 1) {
 			_E("TCP, AF_UNIX, pty, tap are mutually exclusive");
 		}
-	}
 
-	if (opt_tap) {
-		opt_af_unix = 0;
-		opt_slip = 0;
+		defaults_config();
+
+		if (opt_tap) {
+			opt_af_unix = 0;
+			opt_slip = 0;
+		}
 	}
 }
 
@@ -744,8 +746,6 @@ struct sockaddr_in *s_in_new(const char *s)
 int main(int argc, char *argv[])
 {
 	S_QUEUE_INIT(&sl_queue);
-
-	defaults_config();
 
 	options_parse(&argc, &argv);
 
