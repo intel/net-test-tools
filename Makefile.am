@@ -6,8 +6,11 @@ LDADD = @deps_LIBS@
 
 libslip_sources = libslip.c libslip.h libslip_types.h
 
-lib_LTLIBRARIES = libslip.la
+libslipcat_sources = libslipcat.c libslipcat.h
+
+lib_LTLIBRARIES = libslip.la libslipcat.la
 libslip_la_SOURCES = $(libslip_sources)
+libslipcat_la_SOURCES = $(libslipcat_sources)
 
 noinst_PROGRAMS = slipcat
 
@@ -20,10 +23,10 @@ queue_test_SOURCES = queue-test.c queue.h
 
 slipcat_sources = slipcat.c slipcat.h $(libslip_sources)
 
-slipcat_SOURCES = $(slipcat_sources)
+slipcat_SOURCES = $(slipcat_sources) $(libslipcat_sources)
 slipcat_CFLAGS = $(AM_CFLAGS)
 
-slipcat_test_SOURCES = slipcat-test.c $(slipcat_sources)
+slipcat_test_SOURCES = slipcat-test.c $(libslipcat_sources)
 slipcat_test_CFLAGS = $(AM_CFLAGS)
 
 TESTS = \

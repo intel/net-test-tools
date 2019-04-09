@@ -12,18 +12,4 @@
  *
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-
-#include <libslipcat.h>
-
-int main(int argc, char *argv[])
-{
-	int exit_status = EXIT_FAILURE;
-	FILE *fp = (argc > 1) ? fopen(argv[1], "r") : stdin;
-
-end_test:
-	printf("TEST: %s\n", exit_status == EXIT_SUCCESS ? "PASSED" : "FAILED");
-
-	return exit_status;
-}
+struct sockaddr_in *s_in_new(const char *s);
