@@ -46,6 +46,10 @@ TESTS = \
 
 LOG_COMPILER = $(srcdir)/tests/test-wrapper.sh
 
+dist_check_SCRIPTS = \
+	$(LOG_COMPILER) \
+	$(TESTS)
+
 MAINTAINERCLEANFILES = Makefile.in \
 	aclocal.m4 compile configure config.guess config.sub depcomp missing \
 	install-sh ltmain.sh test-driver cscope.out *~ .*~ core
