@@ -46,7 +46,9 @@ TESTS = \
 	tests/queue-11.txt \
 	tests/queue-12.txt \
 	tests/queue-13.txt \
-	tests/libslipcat-01.txt
+	tests/libslipcat-01.txt \
+	tests/libslipcat-02.txt \
+	tests/libslipcat-03.txt
 
 LOG_COMPILER = $(srcdir)/tests/test-wrapper.sh
 
