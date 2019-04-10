@@ -12,6 +12,8 @@ case "$TEST_NAME" in
 	TEST_PROG=./libslip-test;;
     queue-*)
 	TEST_PROG=./queue-test;;
+    libslipcat-*)
+	TEST_PROG=./libslipcat-test;;
 esac
 
 $TEST_PROG < $TEST_INPUT

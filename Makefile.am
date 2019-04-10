@@ -14,7 +14,7 @@ libslipcat_la_SOURCES = $(libslipcat_sources)
 
 noinst_PROGRAMS = slipcat
 
-check_PROGRAMS = libslip-test queue-test slipcat-test
+check_PROGRAMS = libslip-test queue-test libslipcat-test
 
 libslip_test_SOURCES = libslip-test.c $(libslip_sources)
 libslip_test_CFLAGS = $(AM_CFLAGS)
@@ -26,8 +26,8 @@ slipcat_sources = slipcat.c slipcat.h $(libslip_sources)
 slipcat_SOURCES = $(slipcat_sources) $(libslipcat_sources)
 slipcat_CFLAGS = $(AM_CFLAGS)
 
-slipcat_test_SOURCES = slipcat-test.c $(libslipcat_sources)
-slipcat_test_CFLAGS = $(AM_CFLAGS)
+libslipcat_test_SOURCES = libslipcat-test.c $(libslipcat_sources)
+libslipcat_test_CFLAGS = $(AM_CFLAGS)
 
 TESTS = \
 	tests/slip-01.txt \
@@ -45,7 +45,8 @@ TESTS = \
 	tests/queue-10.txt \
 	tests/queue-11.txt \
 	tests/queue-12.txt \
-	tests/queue-13.txt
+	tests/queue-13.txt \
+	tests/libslipcat-01.txt
 
 LOG_COMPILER = $(srcdir)/tests/test-wrapper.sh
 

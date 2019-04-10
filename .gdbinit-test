@@ -1,5 +1,5 @@
 set pri pre
-file libslip-test
-set args t.txt
+file libslipcat-test
+set args tests/libslipcat-01.txt
 b main
 r
