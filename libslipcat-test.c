@@ -12,6 +12,8 @@
  *
  */
 
+#include <arpa/inet.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -21,6 +23,12 @@
 #include "slipcat.h"
 #include "libslipcat.h"
 
+#define is(_a, _b) (strcmp((_a), (_b)) == 0)
+
+static char *input;
+static char *output;
+static char *expected_output;
+
 void line_parse(char *line)
 {
 	GVariant *v = g_variant_parse(G_VARIANT_TYPE("a{ss}"),
@@ -29,15 +37,23 @@ void line_parse(char *line)
 
 	printf("%s\n", g_variant_print(v, TRUE));
 
-	if (vin = g_variant_lookup_value(v, "input", G_VARIANT_TYPE("as"))) {
+	if (vin = g_variant_lookup_value(v, "input", G_VARIANT_TYPE("s"))) {
 
 		printf("input: %s\n", g_variant_print(vin, TRUE));
+
+		g_variant_get(vin, "&s", &input);
+
+		input = strdup(input);
 	}
 
 	if (vex = g_variant_lookup_value(v, "expected_output",
-					G_VARIANT_TYPE("as"))) {
+					G_VARIANT_TYPE("s"))) {
 
 		printf("expected_output: %s\n", g_variant_print(vex, TRUE));
+
+		g_variant_get(vex, "&s", &expected_output);
+
+		expected_output = strdup(expected_output);
 	}
 }
 
@@ -71,6 +87,19 @@ int main(int argc, char *argv[])
 	FILE *fp = (argc > 1) ? fopen(argv[1], "r") : stdin;
 
 	test_load(fp);
+
+	printf("input: '%s', expected_output: '%s'\n", input, expected_output);
+
+	{
+		struct sockaddr_in *s_in = s_in_new(input);
+
+		output = g_strdup_printf("%s:%hu", inet_ntoa(s_in->sin_addr),
+						ntohs(s_in->sin_port));
+		if (is(output, expected_output)) {
+			exit_status = EXIT_SUCCESS;
+		}
+	}
+
 end_test:
 	printf("TEST: %s\n", exit_status == EXIT_SUCCESS ? "PASSED" : "FAILED");
 
