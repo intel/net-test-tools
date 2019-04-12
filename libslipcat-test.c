@@ -25,33 +25,31 @@
 
 #define is(_a, _b) (strcmp((_a), (_b)) == 0)
 
-static char *input;
-static char *output;
-static char *expected_output;
+static char *input, *output, *expected_output;
 
 void line_parse(char *line)
 {
 	GVariant *v = g_variant_parse(G_VARIANT_TYPE("a{ss}"),
 						line, NULL, NULL, NULL);
-	GVariant *vin, *vex;
+	GVariant *v_in, *v_ex;
 
 	printf("%s\n", g_variant_print(v, TRUE));
 
-	if (vin = g_variant_lookup_value(v, "input", G_VARIANT_TYPE("s"))) {
+	if (v_in = g_variant_lookup_value(v, "input", G_VARIANT_TYPE("s"))) {
 
-		printf("input: %s\n", g_variant_print(vin, TRUE));
+		printf("input: %s\n", g_variant_print(v_in, TRUE));
 
-		g_variant_get(vin, "&s", &input);
+		g_variant_get(v_in, "&s", &input);
 
 		input = strdup(input);
 	}
 
-	if (vex = g_variant_lookup_value(v, "expected_output",
+	if (v_ex = g_variant_lookup_value(v, "expected_output",
 					G_VARIANT_TYPE("s"))) {
 
-		printf("expected_output: %s\n", g_variant_print(vex, TRUE));
+		printf("expected_output: %s\n", g_variant_print(v_ex, TRUE));
 
-		g_variant_get(vex, "&s", &expected_output);
+		g_variant_get(v_ex, "&s", &expected_output);
 
 		expected_output = strdup(expected_output);
 	}
