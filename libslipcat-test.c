@@ -29,29 +29,24 @@ static char *input, *output, *expected_output;
 
 void line_parse(char *line)
 {
+	GVariant *v_in, *v_ex;
 	GVariant *v = g_variant_parse(G_VARIANT_TYPE("a{ss}"),
 						line, NULL, NULL, NULL);
-	GVariant *v_in, *v_ex;
-
-	printf("%s\n", g_variant_print(v, TRUE));
+	P("%s", g_variant_print(v, TRUE));
 
 	if (v_in = g_variant_lookup_value(v, "input", G_VARIANT_TYPE("s"))) {
 
-		printf("input: %s\n", g_variant_print(v_in, TRUE));
+		P("input: %s", g_variant_print(v_in, TRUE));
 
-		g_variant_get(v_in, "&s", &input);
-
-		input = strdup(input);
+		g_variant_get(v_in, "s", &input);
 	}
 
 	if (v_ex = g_variant_lookup_value(v, "expected_output",
 					G_VARIANT_TYPE("s"))) {
 
-		printf("expected_output: %s\n", g_variant_print(v_ex, TRUE));
+		P("expected_output: %s", g_variant_print(v_ex, TRUE));
 
-		g_variant_get(v_ex, "&s", &expected_output);
-
-		expected_output = strdup(expected_output);
+		g_variant_get(v_ex, "s", &expected_output);
 	}
 }
 
@@ -63,7 +58,7 @@ void test_load(FILE *f)
 
 	while ((chars_read = getline(&line, &line_len, f)) > 0) {
 
-		printf("line: %s", line);
+		P("line: %s", line);
 
 		if (line[0] != '#') {
 			line_parse(line);
@@ -86,7 +81,7 @@ int main(int argc, char *argv[])
 
 	test_load(fp);
 
-	printf("input: '%s', expected_output: '%s'\n", input, expected_output);
+	P("input: '%s', expected_output: '%s'", input, expected_output);
 
 	{
 		struct sockaddr_in *s_in = s_in_new(input);
@@ -99,7 +94,7 @@ int main(int argc, char *argv[])
 	}
 
 end_test:
-	printf("TEST: %s\n", exit_status == EXIT_SUCCESS ? "PASSED" : "FAILED");
+	P("TEST: %s", exit_status == EXIT_SUCCESS ? "PASSED" : "FAILED");
 
 	return exit_status;
 }
