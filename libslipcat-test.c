@@ -29,9 +29,8 @@ static char *input, *output, *expected_output;
 
 void line_parse(char *line)
 {
-	GVariant *v_in, *v_ex;
-	GVariant *v = g_variant_parse(G_VARIANT_TYPE("a{ss}"),
-						line, NULL, NULL, NULL);
+	GVariant *v_in, *v_ex, *v = g_variant_parse(G_VARIANT_TYPE("a{ss}"),
+							line, NULL, NULL, NULL);
 	P("%s", g_variant_print(v, TRUE));
 
 	if (v_in = g_variant_lookup_value(v, "input", G_VARIANT_TYPE("s"))) {
