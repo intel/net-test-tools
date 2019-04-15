@@ -43,6 +43,7 @@
 
 #define NSIZE 8192
 #define NLEN (NSIZE - sizeof(struct n_hdr))
+#define ETH_ADDRSTRLEN 64
 
 struct n_hdr {
 	void *nh_data;
@@ -334,10 +335,23 @@ void arp_reply(struct nbuf *nb, struct ethhdr *eth_req, struct ether_arp *arp_re
 	memcpy(&arp->arp_tpa, &arp_req->arp_spa, sizeof(arp->arp_tpa));
 }
 
+char *eth_ntoa(const void *addr)
+{
+#define NBUFS 4
+	static char buf[NBUFS][ETH_ADDRSTRLEN];
+	static int i;
+	char *s = buf[++i % NBUFS];
+
+	snprintf(s, ETH_ADDRSTRLEN, "%s", ether_ntoa(addr));
+#undef NBUFS
+	return s;
+}
+
 void frame_dump(struct nbuf *nb)
 {
 	struct ethhdr *eth = nb->n_data;
-	D("%s", h_proto_to_string(ntohs(eth->h_proto)));
+	D("%s > %s %s", eth_ntoa(&eth->h_source), eth_ntoa(&eth->h_dest),
+		h_proto_to_string(ntohs(eth->h_proto)));
 }
 
 int tap(sl_t *s, n_op_t op, struct nbuf **data)
