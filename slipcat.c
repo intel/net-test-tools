@@ -29,6 +29,8 @@
 #include <string.h>
 
 #include <netinet/ether.h>
+#include <netinet/ip.h>
+#include <netinet/in.h>
 
 #include <linux/if.h>
 #include <linux/if_tun.h>
@@ -347,12 +349,37 @@ char *eth_ntoa(const void *addr)
 	return s;
 }
 
+#define spr(_s, _s_size, fmt, args...) do {				\
+	int chars_written = snprintf(_s, _s_size, fmt, ## args);	\
+	if (chars_written < 0) {					\
+		E("snprintf");						\
+	}								\
+	_s += chars_written;						\
+	_s_size -= chars_written;					\
+} while (0)
+
 void frame_dump(void *data, ssize_t len)
 {
+#define BUF_SIZE 160
+	static char buf[BUF_SIZE];
+	ssize_t s_size = BUF_SIZE;
+	char *s = buf;
 	struct ethhdr *eth = data;
-	D("%s > %s %s, len=%zd",
+
+	spr(s, s_size, "%s > %s %s",
 		eth_ntoa(&eth->h_source), eth_ntoa(&eth->h_dest),
-		h_proto_to_string(ntohs(eth->h_proto)), len);
+		h_proto_to_string(ntohs(eth->h_proto)));
+
+	if (ntohs(eth->h_proto) == ETHERTYPE_IP) {
+		struct ip *ip = (void *) (eth + 1);
+
+		spr(s, s_size, ", %s > ", inet_ntoa(ip->ip_src));
+		spr(s, s_size, "%s", inet_ntoa(ip->ip_dst));
+	}
+
+	spr(s, s_size, ", len=%zd", len);
+
+	D("%s", buf);
 }
 
 int tap(sl_t *s, n_op_t op, struct nbuf **data)
