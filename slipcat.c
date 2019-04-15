@@ -347,11 +347,12 @@ char *eth_ntoa(const void *addr)
 	return s;
 }
 
-void frame_dump(struct nbuf *nb)
+void frame_dump(void *data, ssize_t len)
 {
-	struct ethhdr *eth = nb->n_data;
-	D("%s > %s %s", eth_ntoa(&eth->h_source), eth_ntoa(&eth->h_dest),
-		h_proto_to_string(ntohs(eth->h_proto)));
+	struct ethhdr *eth = data;
+	D("%s > %s %s, len=%zu",
+		eth_ntoa(&eth->h_source), eth_ntoa(&eth->h_dest),
+		h_proto_to_string(ntohs(eth->h_proto)), len);
 }
 
 int tap(sl_t *s, n_op_t op, struct nbuf **data)
@@ -363,7 +364,7 @@ int tap(sl_t *s, n_op_t op, struct nbuf **data)
 		if ((d->n_len = read(s->fd, d->n_data, NLEN)) < 0)
 			W("read");
 
-		frame_dump(d);
+		frame_dump(d->n_data, d->n_len);
 
 		if (ntohs(eth->h_proto) == ETHERTYPE_ARP) {
 			struct ether_arp *arp_req = (void *) (eth + 1);
