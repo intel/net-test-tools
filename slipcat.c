@@ -350,7 +350,7 @@ char *eth_ntoa(const void *addr)
 void frame_dump(void *data, ssize_t len)
 {
 	struct ethhdr *eth = data;
-	D("%s > %s %s, len=%zu",
+	D("%s > %s %s, len=%zd",
 		eth_ntoa(&eth->h_source), eth_ntoa(&eth->h_dest),
 		h_proto_to_string(ntohs(eth->h_proto)), len);
 }
