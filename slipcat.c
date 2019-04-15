@@ -290,9 +290,9 @@ int tap_init(void)
 
 const char *h_proto_to_string(uint16_t h_proto)
 {
-	static char s[32];
+	static char buf[32], *s = buf;
 
-#define _(x) case x: return #x
+#define _(x) case x: s = #x; goto out;
 
 	switch (h_proto) {
 	_(ETHERTYPE_IP);
@@ -300,10 +300,11 @@ const char *h_proto_to_string(uint16_t h_proto)
 	_(ETHERTYPE_VLAN);
 	_(ETHERTYPE_IPV6);
 	default:
-		snprintf(s, sizeof(s), "0x%hx", h_proto);
+		snprintf(s, sizeof(buf), "0x%hx", h_proto);
 	}
 #undef _
-	return s;
+out:
+	return *s == 'E' ? s + strlen("ETHERTYPE_"): s;
 }
 
 void arp_reply(struct nbuf *nb, struct ethhdr *eth_req, struct ether_arp *arp_req)
@@ -333,23 +334,22 @@ void arp_reply(struct nbuf *nb, struct ethhdr *eth_req, struct ether_arp *arp_re
 	memcpy(&arp->arp_tpa, &arp_req->arp_spa, sizeof(arp->arp_tpa));
 }
 
+void frame_dump(struct nbuf *nb)
+{
+	struct ethhdr *eth = nb->n_data;
+	D("%s", h_proto_to_string(ntohs(eth->h_proto)));
+}
+
 int tap(sl_t *s, n_op_t op, struct nbuf **data)
 {
 	struct nbuf *d = *data;
-	struct ethhdr *eth;
+	struct ethhdr *eth = d->n_data;
 	switch (op) {
 	case N_UP:
 		if ((d->n_len = read(s->fd, d->n_data, NLEN)) < 0)
 			W("read");
 
-		if (d->n_len) {
-			D("len=%zd", d->n_len);
-		}
-
-		eth = d->n_data;
-
-		D("h_proto=0x%hx %s", ntohs(eth->h_proto),
-			h_proto_to_string(ntohs(eth->h_proto)));
+		frame_dump(d);
 
 		if (ntohs(eth->h_proto) == ETHERTYPE_ARP) {
 			struct ether_arp *arp_req = (void *) (eth + 1);
