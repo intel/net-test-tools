@@ -83,6 +83,7 @@ static char *opt_af_unix;
 static char *opt_pty;
 static int opt_slip;
 static char *opt_tap;
+static char *opt_tap_if_mac;
 static int opt_udp;
 static int opt_trace;
 
@@ -254,11 +255,9 @@ int sysf(const char *fmt, ...)
 
 void tap_config(const char *dev)
 {
-	if (opt_tap_mac) {
-		sysf("ifconfig %s hw ether %s", dev, opt_tap_mac);
-	}
-
+	sysf("ifconfig %s hw ether %s", dev, opt_tap_if_mac);
 	sysf("ifconfig %s up", dev);
+
 	sysf("ifconfig %s -multicast", dev);
 	sysf("sysctl -w net.ipv6.conf.%s.disable_ipv6=1", dev);
 
@@ -620,6 +619,8 @@ static void defaults_config(void)
 	opt_af_unix = "/tmp/slip.sock";
 
 	opt_slip = 1;
+
+	opt_tap_if_mac = "00:00:00:00:00:03";
 
 	opt_udp = 1;
 	opt_udp_src_addr = "127.0.0.1";
