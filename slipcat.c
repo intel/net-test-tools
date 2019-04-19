@@ -326,6 +326,8 @@ void tap_config(const char *dev)
 	sysf("ip route add %s dev %s", opt_tap, dev);
 
 	sysf("ifconfig %s", dev);
+
+	bash_command("./bridge-up.bash");
 }
 
 int tap_init(void)
