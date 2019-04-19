@@ -742,6 +742,58 @@ static void options_parse(int *argc, char **argv[])
 	}
 }
 
+#define VSNPRINTF(_pbuf, _buf_size, fmt, args...) do {			\
+	int chars_written = vsnprintf(_pbuf, _buf_size, fmt, ## args);	\
+	if (chars_written < 0) {					\
+		E("vsnprintf");						\
+	}								\
+	_pbuf += chars_written;						\
+	_buf_size -= chars_written;					\
+} while (0)
+
+/**
+ * Run bash command
+ */
+void bash_command(const char *fmt, ...)
+{
+#define BUF_SIZE 160
+	char buf[BUF_SIZE], *command_line = buf;
+	size_t buf_size = BUF_SIZE;
+
+	spr(command_line, buf_size, "bash -c ");
+
+	{
+		va_list ap;
+		va_start(ap, fmt);
+		VSNPRINTF(command_line, buf_size, fmt, ap);
+		va_end(ap);
+	}
+
+	command_line = buf;
+	P("%s", command_line);
+
+	{
+		gchar *output = NULL;
+		GError *err = NULL;
+
+		if (false == g_spawn_command_line_sync(command_line, &output,
+							NULL, NULL, &err)) {
+			E("g_spawn_command_line_sync");
+		}
+
+		{
+			size_t len = strlen(output);
+
+			if (len && output[len - 1] == '\n') {
+				output[len - 1] = 0;
+			}
+		}
+
+		P("output='%s'", output);
+
+		g_free(output);
+	}
+
 int main(int argc, char *argv[])
 {
 	S_QUEUE_INIT(&sl_queue);
