@@ -793,6 +793,7 @@ void bash_command(const char *fmt, ...)
 
 		g_free(output);
 	}
+}
 
 int main(int argc, char *argv[])
 {
