@@ -176,17 +176,10 @@ void bash_command(const char *fmt, ...)
 			E("g_spawn_command_line_sync");
 		}
 
-		{
-			size_t len = strlen(output);
-
-			if (len && output[len - 1] == '\n') {
-				output[len - 1] = 0;
-			}
+		if (output) {
+			P("output='%s'", strchomp(output, '\n'));
+			g_free(output);
 		}
-
-		P("output='%s'", output);
-
-		g_free(output);
 	}
 }
 
