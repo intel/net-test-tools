@@ -22,4 +22,5 @@ quit() {
 
 while [[ $QUIT -ne 1 ]]; do
     sudo ./slipcat --tap="192.0.2.2" --tap-mac=00:00:00:00:00:02 $@
+    sudo ./bridge-down.bash
 done
