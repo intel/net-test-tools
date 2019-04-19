@@ -268,7 +268,7 @@ void tap_config(const char *dev)
 
 int tap_init(void)
 {
-	struct ifreq *ifr = calloc(1, sizeof(struct ifreq));;
+	struct ifreq *ifr = calloc(1, sizeof(struct ifreq));
 	int fd = open("/dev/net/tun", O_RDWR);
 
 	if (fd == -1)
