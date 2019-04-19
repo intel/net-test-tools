@@ -135,6 +135,17 @@ void nbuf_free(struct nbuf **nb)
 	_buf_size -= chars_written;					\
 } while (0)
 
+char *strchomp(char *s, char ch)
+{
+	size_t len = strlen(s);
+
+	if (len && s[len - 1] == ch) {
+		s[len - 1] = 0;
+	}
+
+	return s;
+}
+
 /**
  * Run bash command
  */
