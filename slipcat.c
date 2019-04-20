@@ -451,6 +451,12 @@ int tap(sl_t *s, n_op_t op, struct nbuf **data)
 		if ((d->n_len = read(s->fd, d->n_data, NLEN)) < 0)
 			W("read");
 
+		/* Temporary: drop IPv6 until we fully support it
+		 * in the sanity check and experimental TCP */
+		if (ETHERTYPE_IPV6 == ntohs(eth->h_proto)) {
+			return false;
+		}
+
 		frame_dump(d->n_data, d->n_len);
 
 		if (ntohs(eth->h_proto) == ETHERTYPE_ARP) {
