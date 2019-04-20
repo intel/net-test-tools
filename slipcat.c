@@ -177,7 +177,9 @@ void bash_command(const char *fmt, ...)
 		}
 
 		if (output) {
-			P("output='%s'", strchomp(output, '\n'));
+			if (strlen(output)) {
+				P("output='%s'", strchomp(output, '\n'));
+			}
 			g_free(output);
 		}
 	}
