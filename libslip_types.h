@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018, Intel Corporation.
+ * Copyright © 2018-2019, Intel Corporation.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU Lesser General Public License,
@@ -12,8 +12,8 @@
  *
  */
 
-#ifndef __LIBSLIP_TYPES_H
-#define __LIBSLIP_TYPES_H
+#ifndef LIBSLIP_TYPES_H
+#define LIBSLIP_TYPES_H
 
 #include <stdint.h>
 
@@ -39,4 +39,4 @@ typedef struct {
 }
 #endif
 
-#endif /* __LIBSLIP_TYPES_H */
+#endif /* LIBSLIP_TYPES_H */

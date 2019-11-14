@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018, Intel Corporation.
+ * Copyright © 2018-2019, Intel Corporation.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU Lesser General Public License,
@@ -12,8 +12,8 @@
  *
  */
 
-#ifndef __LIBSLIP_H
-#define __LIBSLIP_H
+#ifndef LIBSLIP_H
+#define LIBSLIP_H
 
 #include <stdint.h>
 
@@ -31,4 +31,4 @@ void libslip_output(uint8_t *in, size_t len, uint8_t *out, size_t *out_len);
 }
 #endif
 
-#endif /* __LIBSLIP_H */
+#endif /* LIBSLIP_H */
