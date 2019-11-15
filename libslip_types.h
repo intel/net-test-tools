@@ -30,7 +30,7 @@ typedef struct {
 	int esc;
 	int end;
 	uint8_t *data;
-	uint8_t len;
+	size_t len;
 	uint8_t *buf;
 	size_t buf_len;
 } slip_t;
