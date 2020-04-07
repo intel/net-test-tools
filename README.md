@@ -25,9 +25,9 @@ With no parameters, the slipcat defaults to AF_UNIX stream socket
 (/tmp/slip.sock), waiting for connection from QEMU.
 
 Input data from AF_UNIX socket is passed through the SLIP protocol module,
-sent to trace interface and then forwared to the UDP socket.
+sent to trace interface and then forwarded to the UDP socket.
 
-Revervse operations are applied on input from the UDP socket.
+Reverse operations are applied on input from the UDP socket.
 
 Protocol test suites are expected to communicate with the UDP socket.
 
@@ -37,7 +37,7 @@ The UDP encapsulation is ensuring that:
   no interference with the host's system (it's safe to send malformed data)
   and there's no intrusion from the host's TCP/IP stack into protocol
   communication procedures.
-- No admin privieges are required in order to configure extra virtual
+- No admin privileges are required in order to configure extra virtual
   network interfaces or access them.
 
 Expected input data on both sockets are Ethernet frames.
@@ -77,7 +77,7 @@ The communication can be observed and analyzed with Wireshark:
 
 ### Enhancement Plans
 
-- Make it possible to insert, remove, change the order of the protocl modules,
+- Make it possible to insert, remove, change the order of the protocol modules,
   insert a module at any specific position.
 
 See also TODO.txt.
