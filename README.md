@@ -71,8 +71,8 @@ UDP/IPv4 to localhost:7777.
 The communication can be observed and analyzed with Wireshark:
 
 ```
-    # sudo apt-get install wireshark-gtk
-    # wireshark-gtk -p -i lo -f "udp port 7777" -d udp.port==7777,eth -k &
+    # sudo apt-get install wireshark
+    # wireshark -p -i lo -f "udp port 7777" -d udp.port==7777,eth -k &
 ```
 
 ### Enhancement Plans
