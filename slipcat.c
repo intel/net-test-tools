@@ -269,7 +269,7 @@ int af_unix_init(void)
 		memset(&su, 0, sizeof(su));
 
 		su.sun_family = AF_UNIX;
-		strncpy(su.sun_path, opt_af_unix, strlen(opt_af_unix));
+		strncpy(su.sun_path, opt_af_unix, sizeof(su.sun_path));
 
 		if (bind(s, (void *) &su, su_len) == -1)
 			E("bind");
